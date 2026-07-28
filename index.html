@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kármán — an incompressible fluid, solved in your browser</title>
+<meta name="description" content="A real-time Navier–Stokes solver running on the GPU. Drag to push the ink. No libraries, no build step, no dependencies.">
+<meta name="color-scheme" content="dark">
+<link rel="stylesheet" href="src/styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='13' fill='none' stroke='%23e0a35c' stroke-width='2'/><path d='M6 20 Q16 4 26 20' fill='none' stroke='%236fd3d6' stroke-width='2'/></svg>">
+</head>
+<body>
+<a class="skip" href="#reading">Skip to the written part</a>
+
+<div id="stage" class="stage">
+  <canvas id="scene" class="stage__canvas" aria-label="Interactive fluid simulation. Drag to push the ink." role="img"></canvas>
+  <div class="stage__fallback" role="status">
+    <p class="stage__fallback-title">The simulation needs WebGL2.</p>
+    <p id="fallback-reason" class="stage__fallback-reason"></p>
+    <p>Everything written below still works.</p>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead__inner">
+    <span class="wordmark">Kármán</span>
+    <span class="masthead__meta">Navier–Stokes · <span id="rate">measuring…</span> · 0 dependencies</span>
+  </div>
+  <div class="masthead__rail"><i id="progress" class="masthead__progress"></i></div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="hero__inner">
+      <p class="eyelash">Real-time computational fluid dynamics</p>
+      <h1 class="hero__title">Move your&nbsp;cursor.<br><em>The fluid is real.</em></h1>
+      <p class="hero__lede">
+        Every frame, your GPU advects a velocity field through itself, measures its
+        divergence, solves a Poisson equation for pressure, and subtracts the gradient
+        to make the flow incompressible. Twenty-two iterations. Thirty passes. Eleven
+        milliseconds on the M1 this was built on. Then it does it again.
+      </p>
+      <p class="hero__cue"><span class="hero__cue-dot"></span>Drag anywhere on the ink</p>
+    </div>
+  </section>
+
+  <div id="reading" class="reading">
+
+    <section class="panel" data-reveal>
+      <div class="panel__label">01 — The method</div>
+      <div class="panel__body">
+        <h2>Stable fluids, unchanged since 1999.</h2>
+        <p>
+          Jos Stam's insight was that you can take an arbitrarily large timestep without
+          the simulation exploding, if you stop trying to push particles forward and
+          instead ask each cell where its contents <em>came from</em>. Trace the velocity
+          field backwards, sample what was there, done. Unconditionally stable.
+        </p>
+        <p>
+          The price is that it is a first-order scheme, so it bleeds energy — vortices
+          that should persist for minutes flatten out in seconds. The fix is to measure
+          the curl that was lost and push it back in. That is the <strong>Vorticity</strong>
+          slider below. Turn it past forty and the fluid starts to boil, because you are
+          now adding more rotation than the physics removed.
+        </p>
+        <ol class="passes">
+          <li><span>curl</span> measure rotation across the grid</li>
+          <li><span>vorticity</span> re-inject what advection smeared away</li>
+          <li><span>divergence</span> find where fluid is compressing</li>
+          <li><span>pressure</span> ×22 Jacobi sweeps of the Poisson solve</li>
+          <li><span>gradient</span> subtract pressure — flow is now incompressible</li>
+          <li><span>advect</span> move velocity through itself, then the ink through it</li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="panel" data-reveal>
+      <div class="panel__label">02 — Instruments</div>
+      <div class="panel__body">
+        <h2>Numbers measured, not claimed.</h2>
+        <p>
+          Read from the running system: frame time from the render clock, grid sizes and
+          memory from the allocated textures, the renderer string from your driver. If
+          the fluid stutters, this readout will say so.
+        </p>
+        <dl id="telemetry" class="telemetry"></dl>
+      </div>
+    </section>
+
+    <section class="panel" data-reveal>
+      <div class="panel__label">03 — Controls</div>
+      <div class="panel__body">
+        <h2>Break it on purpose.</h2>
+        <p>
+          These are the actual solver parameters, not a theme picker. Drop the Jacobi
+          sweeps to 1 and watch the fluid lose its ability to know about the far side of
+          the screen; the ink will visibly pile up instead of flowing around.
+        </p>
+        <div id="controls" class="controls"></div>
+        <div class="controls__actions">
+          <button id="reset" type="button" class="button">Reset the field</button>
+          <label class="toggle">
+            <input id="shading" type="checkbox" checked>
+            <span>Volumetric shading</span>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" data-reveal>
+      <div class="panel__label">04 — Colophon</div>
+      <div class="panel__body">
+        <h2>What this is, honestly.</h2>
+        <p>
+          One HTML file, one stylesheet, eleven ES modules, nine GLSL programs. No
+          framework, no bundler, no CDN, no analytics, nothing phoning home. It runs from
+          a static directory and it runs offline.
+        </p>
+        <p>
+          The ink colour is not random. Speed is mapped through a saturating curve into a
+          five-stop ramp that runs indigo → teal → amber → white, so the bright cores are
+          literally where you moved fastest. A random hue per stroke would have been
+          easier and would have read as a rainbow smear.
+        </p>
+        <p class="colophon-sign">
+          Built as an introduction, by <strong>Super Dev</strong>.<br>
+          <span class="muted">Tested: 60 unit tests over the solver's pure logic, plus 11 headless-browser checks that read pixels back off the GPU to prove it actually paints. Three real bugs were found that way, including a splat radius that was squared when it should not have been.</span>
+        </p>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer class="footer">
+  <span>Kármán</span>
+  <span class="muted">Named for the vortex street — the one that shows up behind every obstacle in every real flow.</span>
+</footer>
+
+<script type="module" src="src/main.js"></script>
+</body>
+</html>

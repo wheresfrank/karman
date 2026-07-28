@@ -1,0 +1,542 @@
+/*
+ * Kármán — page styling.
+ *
+ * The simulation is the loudest thing on the page, so the typography stays
+ * deliberately quiet: one serif for display, one mono for anything that is a
+ * measurement, hairline rules, and a lot of empty space. Panels are dark
+ * scrims rather than solid blocks so the ink stays faintly visible behind the
+ * text and the page reads as one surface instead of a canvas with cards on it.
+ */
+
+:root {
+  --ink: #06070a;
+  --paper: #ece9e3;
+  --muted: #8b8f98;
+  --line: rgba(236, 233, 227, 0.11);
+  --amber: #e0a35c;
+  --cyan: #6fd3d6;
+
+  --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, ui-serif, serif;
+  --sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
+
+  --gutter: clamp(1.25rem, 5vw, 4.5rem);
+  --measure: 62ch;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--sans);
+  font-size: clamp(1rem, 0.94rem + 0.3vw, 1.125rem);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+::selection { background: var(--amber); color: var(--ink); }
+
+:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.skip {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  padding: 0.75rem 1rem;
+  background: var(--paper);
+  color: var(--ink);
+  font: 600 0.85rem var(--sans);
+}
+.skip:focus { left: 0.5rem; top: 0.5rem; }
+
+.muted { color: var(--muted); }
+
+/* ------------------------------------------------------------------ stage */
+
+.stage {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(120% 90% at 50% 0%, #0d1018 0%, var(--ink) 62%);
+}
+
+.stage__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 1200ms ease 120ms;
+  touch-action: none; /* Let a drag paint instead of scrolling the page. */
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: crosshair;
+}
+
+.stage[data-ready='true'] .stage__canvas { opacity: 1; }
+.stage[data-fallback='true'] .stage__canvas { display: none; }
+
+.stage__fallback {
+  display: none;
+  position: absolute;
+  inset: auto 0 12% 0;
+  padding: 0 var(--gutter);
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.stage[data-fallback='true'] .stage__fallback { display: block; }
+.stage[data-fallback='true'] {
+  background:
+    radial-gradient(60% 50% at 30% 30%, rgba(111, 211, 214, 0.22), transparent 70%),
+    radial-gradient(50% 45% at 72% 62%, rgba(224, 163, 92, 0.22), transparent 70%),
+    var(--ink);
+}
+.stage__fallback-title { color: var(--paper); margin-bottom: 0.25rem; }
+.stage__fallback-reason { font-family: var(--mono); font-size: 0.8rem; }
+
+/* --------------------------------------------------------------- masthead */
+
+.masthead {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 10;
+  backdrop-filter: blur(14px) saturate(120%);
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
+  background: linear-gradient(to bottom, rgba(6, 7, 10, 0.82), rgba(6, 7, 10, 0.32));
+  border-bottom: 1px solid var(--line);
+}
+
+.masthead__inner {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem var(--gutter);
+}
+
+.wordmark {
+  font-family: var(--serif);
+  font-size: 1.1rem;
+  letter-spacing: 0.02em;
+}
+
+.masthead__meta {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.masthead__rail { height: 1px; background: transparent; }
+.masthead__progress {
+  display: block;
+  height: 1px;
+  background: linear-gradient(90deg, var(--cyan), var(--amber));
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+}
+
+/* ------------------------------------------------------------------- hero */
+
+main { position: relative; z-index: 1; }
+
+.hero {
+  min-height: 100svh;
+  display: grid;
+  align-items: end;
+  padding: 0 var(--gutter) clamp(3rem, 10vh, 7rem);
+  pointer-events: none; /* The canvas behind must stay draggable. */
+  /* pointer-events alone does not stop a drag from selecting this text: the
+     browser runs its own selection pass and the headline highlights while you
+     paint. The article copy below stays selectable. */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.hero__inner { max-width: 54rem; }
+
+.eyelash {
+  margin: 0 0 1.5rem;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+
+.hero__title {
+  margin: 0 0 1.5rem;
+  font-family: var(--serif);
+  font-weight: 400;
+  /* Capped so "Move your cursor." holds one line on a laptop; below that the
+     clamp lets it wrap naturally rather than shrinking the second line. */
+  font-size: clamp(2.6rem, 6.4vw, 5.25rem);
+  line-height: 1.02;
+  letter-spacing: -0.025em;
+  text-shadow: 0 2px 40px rgba(6, 7, 10, 0.75);
+}
+
+.hero__title em {
+  font-style: italic;
+  color: transparent;
+  background: linear-gradient(96deg, var(--cyan), var(--paper) 45%, var(--amber));
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.hero__lede {
+  max-width: 40rem;
+  margin: 0 0 2.5rem;
+  font-size: clamp(1rem, 0.95rem + 0.35vw, 1.2rem);
+  color: rgba(236, 233, 227, 0.82);
+  text-shadow: 0 1px 24px rgba(6, 7, 10, 0.9);
+}
+
+.hero__cue {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.85rem; /* Clears the dot's expanding pulse ring. */
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.hero__cue-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--amber);
+  box-shadow: 0 0 0 0 rgba(224, 163, 92, 0.6);
+  animation: pulse 2.4s ease-out infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(224, 163, 92, 0.5); }
+  70% { box-shadow: 0 0 0 12px rgba(224, 163, 92, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(224, 163, 92, 0); }
+}
+
+/* ----------------------------------------------------------------- panels */
+
+/*
+ * The scrim is full-bleed on the reading area rather than on each panel.
+ * Per-panel backgrounds cut hard vertical edges through the ink at the
+ * content's max-width, which read as floating cards laid on a picture. One
+ * continuous surface that fades in from the hero reads as a single page.
+ */
+.reading {
+  padding: 0 var(--gutter) clamp(4rem, 10vh, 8rem);
+  background: linear-gradient(
+    to bottom,
+    rgba(6, 7, 10, 0) 0,
+    rgba(6, 7, 10, 0.93) clamp(4rem, 12vh, 9rem),
+    rgba(6, 7, 10, 0.97) 100%
+  );
+}
+
+.panel {
+  display: grid;
+  grid-template-columns: 10rem minmax(0, 1fr);
+  gap: clamp(1rem, 4vw, 3.5rem);
+  max-width: 68rem;
+  margin: 0 auto;
+  padding: clamp(2.5rem, 7vw, 5rem) clamp(1.25rem, 4vw, 3rem);
+  border-top: 1px solid var(--line);
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 900ms cubic-bezier(0.16, 1, 0.3, 1), transform 900ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.panel:first-child { border-top: none; }
+.panel[data-revealed='true'] { opacity: 1; transform: none; }
+
+.panel__label {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding-top: 0.6rem;
+}
+
+.panel__body { max-width: var(--measure); }
+
+.panel h2 {
+  margin: 0 0 1.25rem;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(1.75rem, 3.6vw, 2.75rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.panel p { margin: 0 0 1.15rem; color: rgba(236, 233, 227, 0.78); }
+.panel p:last-child { margin-bottom: 0; }
+.panel strong { color: var(--paper); font-weight: 600; }
+.panel em { color: var(--paper); }
+
+/* The six passes, as a numbered spec list. */
+.passes {
+  margin: 2rem 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: pass;
+  border-top: 1px solid var(--line);
+}
+
+.passes li {
+  counter-increment: pass;
+  display: grid;
+  grid-template-columns: 2.5rem 8.5rem minmax(0, 1fr);
+  gap: 1rem;
+  align-items: baseline;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.92rem;
+  color: rgba(236, 233, 227, 0.72);
+}
+
+.passes li::before {
+  content: counter(pass, decimal-leading-zero);
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+.passes span {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--cyan);
+}
+
+/* -------------------------------------------------------------- telemetry */
+
+.telemetry {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
+  gap: 1px;
+  margin: 2rem 0 0;
+  padding: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  min-height: 5.5rem;
+  padding: 1rem 1.1rem;
+  background: var(--ink);
+}
+
+/*
+ * The driver string is long and unpredictable — "ANGLE (Apple, ANGLE Metal
+ * Renderer: Apple M1, Unspecified Version)". In a narrow cell it wrapped to
+ * four lines and dragged the whole row with it, so it gets its own full-width
+ * row laid out horizontally.
+ */
+.stat--wide {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.5rem;
+  min-height: 0;
+}
+
+.stat--wide .stat__value {
+  margin: 0;
+  padding-top: 0;
+  text-align: right;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.stat__label {
+  font-family: var(--mono);
+  font-size: 0.63rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.stat__value {
+  margin: auto 0 0; /* Values sit on the cell's bottom edge, aligned across the row. */
+  padding-top: 0.4rem;
+  font-family: var(--mono);
+  font-size: 1.05rem;
+  color: var(--paper);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+/* --------------------------------------------------------------- controls */
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 1.75rem 2.5rem;
+  margin: 2rem 0 0;
+}
+
+.control__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.control__label {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--paper);
+}
+
+.control__value {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--amber);
+  font-variant-numeric: tabular-nums;
+}
+
+.control__hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.control__range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 1px;
+  background: rgba(236, 233, 227, 0.25);
+  cursor: ew-resize;
+}
+
+.control__range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--paper);
+  border: none;
+  transition: transform 160ms ease, background-color 160ms ease;
+}
+.control__range::-webkit-slider-thumb:hover { transform: scale(1.25); background: var(--amber); }
+
+.control__range::-moz-range-thumb {
+  width: 13px;
+  height: 13px;
+  border: none;
+  border-radius: 50%;
+  background: var(--paper);
+}
+.control__range::-moz-range-track { height: 1px; background: rgba(236, 233, 227, 0.25); }
+
+.controls__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.5rem;
+  margin-top: 2.25rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+}
+
+.button {
+  padding: 0.6rem 1.4rem;
+  background: transparent;
+  border: 1px solid rgba(236, 233, 227, 0.3);
+  border-radius: 999px;
+  color: var(--paper);
+  font: 0.72rem var(--mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 200ms ease, color 200ms ease, background-color 200ms ease;
+}
+.button:hover { border-color: var(--amber); color: var(--amber); background: rgba(224, 163, 92, 0.06); }
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+}
+.toggle input { accent-color: var(--amber); width: 1rem; height: 1rem; }
+
+.colophon-sign {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.9rem;
+}
+
+/* ----------------------------------------------------------------- footer */
+
+.footer {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 2rem var(--gutter) 3rem;
+  border-top: 1px solid var(--line);
+  background: rgba(6, 7, 10, 0.94);
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* ------------------------------------------------------------ small print */
+
+@media (max-width: 46rem) {
+  .panel { grid-template-columns: 1fr; }
+  .panel__label { padding-top: 0; }
+  .passes li { grid-template-columns: 2rem 1fr; }
+  .passes li span { grid-column: 2; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .panel { opacity: 1; transform: none; }
+  .stage__canvas { opacity: 1; }
+}

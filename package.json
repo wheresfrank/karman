@@ -1,0 +1,15 @@
+{
+  "name": "karman",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A real-time incompressible Navier-Stokes solver running on the GPU, with no dependencies.",
+  "scripts": {
+    "start": "node scripts/serve.js",
+    "test": "node --test \"tests/unit/*.test.js\"",
+    "test:browser": "node tests/e2e/render.test.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
