@@ -8,6 +8,11 @@
  * to earn its keep.
  *
  * Usage: node scripts/shoot.js [--scroll=0.35] [--drag] [--out=name.png]
+ *        node scripts/shoot.js --url=https://example.com/karman/
+ *
+ * With --url it shoots that address instead of starting a local server, which
+ * is how a deployment gets checked: a 200 response proves the file is there,
+ * not that the shaders compile and the fluid runs.
  */
 
 import { spawn } from 'node:child_process';
@@ -18,7 +23,6 @@ import { launchChrome, openTab, evaluate } from '../tests/e2e/cdp.js';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const PORT = Number(process.env.PORT) || 8422;
-const ORIGIN = `http://127.0.0.1:${PORT}`;
 
 const args = Object.fromEntries(
   process.argv.slice(2).map((arg) => {
@@ -30,6 +34,10 @@ const args = Object.fromEntries(
 const WIDTH = Number(args.width) || 1440;
 const HEIGHT = Number(args.height) || 900;
 const SETTLE_MS = Number(args.settle) || 4000;
+
+// A remote target needs no local server; a local one gets served from disk.
+const REMOTE = typeof args.url === 'string' && args.url !== 'true';
+const ORIGIN = REMOTE ? args.url : `http://127.0.0.1:${PORT}`;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -62,7 +70,7 @@ async function dragAcross(send) {
   await send('Input.dispatchMouseEvent', { type: 'mouseReleased', button: 'left', buttons: 0, ...points.at(-1) });
 }
 
-const server = spawn(process.execPath, ['scripts/serve.js'], {
+const server = REMOTE ? null : spawn(process.execPath, ['scripts/serve.js'], {
   cwd: ROOT,
   env: { ...process.env, PORT: String(PORT) },
   stdio: 'ignore',
@@ -72,7 +80,7 @@ const chrome = await launchChrome({ width: WIDTH, height: HEIGHT });
 const tab = await openTab(chrome.wsUrl);
 
 try {
-  await waitForServer();
+  if (!REMOTE) await waitForServer();
   await tab.send('Page.enable');
   await tab.send('Emulation.setDeviceMetricsOverride', {
     width: WIDTH, height: HEIGHT, deviceScaleFactor: 2, mobile: false,
@@ -101,5 +109,5 @@ try {
 } finally {
   tab.browser.close();
   await chrome.close();
-  server.kill('SIGTERM');
+  server?.kill('SIGTERM');
 }
